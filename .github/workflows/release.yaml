@@ -22,7 +22,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.24'
 
       - name: Get short commit hash
         id: vars
@@ -42,6 +42,11 @@ jobs:
 
       - name: Archive binary
         run: |
+          if [ ! -f dist/${output_name} ]; then
+            echo "Error: dist/${output_name} does not exist"
+            exit 1
+          fi
+
           if [ "${{ matrix.goos }}" == "windows" ]; then
             zip dist/${output_name}.zip dist/${output_name}
             rm dist/${output_name}
