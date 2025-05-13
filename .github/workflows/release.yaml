@@ -29,12 +29,15 @@ jobs:
         run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build binary
+        id: build
         run: |
           mkdir -p dist
           output_name="go-cat-${{ matrix.goos }}-${{ matrix.goarch }}-${{ steps.vars.outputs.hash }}"
           if [ "${{ matrix.goos }}" == "windows" ]; then
             output_name="${output_name}.exe"
           fi
+          echo "output_name=${output_name}" >> $GITHUB_OUTPUT
+
           echo "Building ${output_name}..."
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o dist/${output_name} ./cmd
 
@@ -48,17 +51,17 @@ jobs:
 
       - name: Archive binary
         run: |
-          if [ ! -f dist/${output_name} ]; then
-            echo "Error: dist/${output_name} does not exist"
+          if [ ! -f dist/${{ steps.build.outputs.output_name }} ]; then
+            echo "Error: dist/${{ steps.build.outputs.output_name }} does not exist"
             exit 1
           fi
 
           if [ "${{ matrix.goos }}" == "windows" ]; then
-            zip dist/${output_name}.zip dist/${output_name}
-            rm dist/${output_name}
+            zip dist/${{ steps.build.outputs.output_name }}.zip dist/${{ steps.build.outputs.output_name }}
+            rm dist/${{ steps.build.outputs.output_name }}
           else
-            tar -czvf dist/${output_name}.tar.gz -C dist ${output_name}
-            rm dist/${output_name}
+            tar -czvf dist/${{ steps.build.outputs.output_name }}.tar.gz -C dist ${{ steps.build.outputs.output_name }}
+            rm dist/${{ steps.build.outputs.output_name }}
           fi
 
       - name: Generate changelog
