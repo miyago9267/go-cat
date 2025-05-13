@@ -64,18 +64,7 @@ jobs:
             rm dist/${{ steps.build.outputs.output_name }}
           fi
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          {
-            echo "changelog<<EOF"
-            git log -1 --pretty=format:"%h - %s (%an)"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
-          body: |
-            ${{ steps.changelog.outputs.changelog }}
