@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # 觸發條件：v1.0.0 這種 tag
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -24,14 +24,18 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Get short commit hash
+        id: vars
+        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Build binary
         run: |
           mkdir -p dist
-          output_name="go-cat-${{ matrix.goos }}-${{ matrix.goarch }}"
+          output_name="go-cat-${{ matrix.goos }}-${{ matrix.goarch }}-${{ steps.vars.outputs.hash }}"
           if [ "${{ matrix.goos }}" == "windows" ]; then
             output_name="${output_name}.exe"
           fi
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/${output_name}
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/${output_name} ./cmd
 
       - name: Archive binary
         run: |
@@ -44,7 +48,16 @@ jobs:
             rm ${output_name}
           fi
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          git log -1 --pretty=format:"%h - %s (%an)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
