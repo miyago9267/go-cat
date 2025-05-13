@@ -37,15 +37,17 @@ jobs:
           fi
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/${output_name} ./cmd
 
+      - name: Debug dist content
+        run: ls -alh dist
+
       - name: Archive binary
         run: |
-          cd dist
           if [ "${{ matrix.goos }}" == "windows" ]; then
-            zip ${output_name}.zip ${output_name}
-            rm ${output_name}
+            zip dist/${output_name}.zip dist/${output_name}
+            rm dist/${output_name}
           else
-            tar -czvf ${output_name}.tar.gz ${output_name}
-            rm ${output_name}
+            tar -czvf dist/${output_name}.tar.gz -C dist ${output_name}
+            rm dist/${output_name}
           fi
 
       - name: Generate changelog
